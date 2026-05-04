@@ -14,12 +14,10 @@ async def client():
 
 @pytest.mark.asyncio
 async def test_create_and_get_wallet(client):
-    # Создаём кошелёк
     resp = await client.post("/api/v1/wallets/")
     assert resp.status_code == 201
     wallet_id = resp.json()["wallet_id"]
 
-    # Получаем баланс (должен быть 0)
     resp = await client.get(f"/api/v1/wallets/{wallet_id}")
     assert resp.status_code == 200
     assert resp.json()["balance"] == "0.00"
@@ -27,11 +25,9 @@ async def test_create_and_get_wallet(client):
 
 @pytest.mark.asyncio
 async def test_deposit(client):
-    # Создаём кошелёк
     resp = await client.post("/api/v1/wallets/")
     wallet_id = resp.json()["wallet_id"]
 
-    # Пополнение
     resp = await client.post(
         f"/api/v1/wallets/{wallet_id}/operation",
         json={"operation_type": "DEPOSIT", "amount": 100.50}
@@ -44,9 +40,7 @@ async def test_deposit(client):
 async def test_withdraw_sufficient(client):
     resp = await client.post("/api/v1/wallets/")
     wallet_id = resp.json()["wallet_id"]
-    # Пополняем
     await client.post(f"/api/v1/wallets/{wallet_id}/operation", json={"operation_type": "DEPOSIT", "amount": 50})
-    # Снимаем
     resp = await client.post(f"/api/v1/wallets/{wallet_id}/operation",
                              json={"operation_type": "WITHDRAW", "amount": 30})
     assert resp.status_code == 200
@@ -57,7 +51,6 @@ async def test_withdraw_sufficient(client):
 async def test_withdraw_insufficient(client):
     resp = await client.post("/api/v1/wallets/")
     wallet_id = resp.json()["wallet_id"]
-    # Снимаем без пополнения
     resp = await client.post(f"/api/v1/wallets/{wallet_id}/operation",
                              json={"operation_type": "WITHDRAW", "amount": 10})
     assert resp.status_code == 400
