@@ -23,7 +23,6 @@ class WalletService:
         operation_type: OperationType
     ) -> Decimal:
         async with db.begin():
-            # Блокировка строки для атомарного обновления
             result = await db.execute(
                 select(WalletDataBase).where(WalletDataBase.id == wallet_id).with_for_update()
             )
@@ -33,7 +32,7 @@ class WalletService:
 
             if operation_type == OperationType.DEPOSIT:
                 new_balance = wallet.balance + amount
-            else:  # WITHDRAW
+            else:  
                 if wallet.balance < amount:
                     raise InsufficientFundsError(
                         f"Insufficient funds. Available: {wallet.balance}, requested: {amount}"
@@ -41,12 +40,10 @@ class WalletService:
                 new_balance = wallet.balance - amount
 
             wallet.balance = new_balance
-            # Изменения сохранятся при выходе из блока async with db.begin()
             await db.flush()
 
         return new_balance
 
-    # Кошелек для тестов
     async def create_wallet(self, db: AsyncSession, initial_balance: Decimal = Decimal("0.00")) -> WalletDataBase:
         wallet = WalletDataBase(balance=initial_balance)
         db.add(wallet)
